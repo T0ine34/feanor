@@ -10,6 +10,8 @@ Python script for simplify automatic build, tests, publish and deploy of project
 - usable in CI/CD pipelines
 - clear logs for debugging
 - build from a temporary directory, so the source code is not modified
+- fully support python virtual environments, useful for python projects
+- can process custom arguments, for set up a conditional build for example
 - choose the files you want to export from the build
 
 ## Usage
@@ -37,11 +39,7 @@ class Builder(BaseBuilder):
     def Publish(self):
         pass
         
-BaseBuilder.execute()
 ```
-
-
-> The `BaseBuilder.execute()` function must be called at the end of the file.
 
 > You can rename the `Builder` class to any name you want.
 
@@ -68,14 +66,7 @@ Builder options:
   --no-docs             Do not generate documentation
   --publish             Publish the package
   --no-clean            Do not clean temporary files
-  --temp-dir TEMP_DIR   Temporary directory (used to generate the package)
   --dist-dir DIST_DIR   Distribution directory (where to save the built files)
   -pv PACKAGE_VERSION, --package-version PACKAGE_VERSION
                         set the version of the package you want to build
 ```
-
-## Installation
-```bash
-pip install https://github.com/GamuNetwork/devtools/releases/download/1.6.8/build_tool-1.6.8-py3-none-any.whl
-```
-
