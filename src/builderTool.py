@@ -10,7 +10,7 @@ import gamuLogger
 
 from .virtualEnv import Venv
 from .temp import TempFile, TempDir
-    
+
 Logger.setModule('Builder')
 
 MAIN_FILENAME = Path(__main__.__file__).name
@@ -128,8 +128,7 @@ Use `python {your_script}.py -h` to see the available options
         os.makedirs(self.__args["dist_dir"], exist_ok=True)
 
 
-############################################ PROPERTIES ###########################################
-
+#region PROPERTIES
 
     @property
     def tempDir(self):
@@ -144,7 +143,8 @@ Use `python {your_script}.py -h` to see the available options
         return os.path.abspath(self.__args["dist_dir"])
 
 
-######################################### PUBLIC FUNCTIONS ########################################
+#endregion
+#region PUBLIC FUNCTIONS
 
 
     def addAndReplaceByPackageVersion(self, src, dest = None, versionString = "{version}"):
@@ -244,7 +244,8 @@ Use `python {your_script}.py -h` to see the available options
         return Venv.getInstance(self.tempDir + '/env', self.tempDir)
 
 
-######################################### STATIC FUNCTIONS ########################################
+#endregion
+#region STATIC FUNCTIONS
 
 
     @staticmethod
@@ -255,7 +256,8 @@ Use `python {your_script}.py -h` to see the available options
         BaseBuilder.__CustomArgs[argument] = (help, default, action)
 
 
-######################################## INTERNAL FUNCTIONS #######################################
+#endregion
+#region PRIVATE FUNCTIONS
 
 
     def __clean(self) -> bool:
@@ -365,7 +367,8 @@ Use `python {your_script}.py -h` to see the available options
                 Logger.info("exported files:\n\t"+ "\n\t".join(exported))
 
 
-#################################### INTERNAL STATIC FUNCTIONS ####################################
+#endregion
+#region PRIVATE STATIC FUNCTIONS
 
     @staticmethod
     def __config_args():
@@ -431,6 +434,8 @@ Use `python {your_script}.py -h` to see the available options
     @staticmethod
     def register_execute():
         atexit.register(BaseBuilder.__execute)
+        
+#endregion
     
 BaseBuilder.register_execute()
 

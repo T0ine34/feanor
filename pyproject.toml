@@ -18,5 +18,5 @@ classifiers = [
 ]
 
 dependencies = [
-  "gamu_logger @ https://github.com/GamuNetwork/logger/releases/download/2.0.2/gamu_logger-2.0.2-py3-none-any.whl#sha256=185782d478320acc807eae96a22fed155b1a4533a056cbd6de4487c9c0e9995a"
+  "gamu_logger @ https://github.com/GamuNetwork/logger/releases/download/2.0.3/gamu_logger-2.0.3-py3-none-any.whl"
 ]

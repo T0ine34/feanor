@@ -27,6 +27,25 @@ class Venv:
         
         Venv.__instance = self
         
+#region PROPERTIES
+
+    @property
+    def python(self):
+        return os.path.join(self.__path, self.binDir, 'python')
+    
+    @property
+    def pip(self):
+        return os.path.join(self.__path, self.binDir, 'pip')
+
+    @property
+    def path(self):
+        return self.__path
+        
+
+#endregion
+#region PUBLIC FUNCTIONS
+        
+        
     def install(self, package : str, version = None):
         if version is not None:
             package += f'=={version}'
@@ -40,28 +59,6 @@ class Venv:
         self.__run(f'python -m pip install -r {path}')
         Logger.debug(f"Packages installed successfully")
         
-    def __run(self, command : str):
-        # stdoutFile, stdoutPath = mkstemp()
-        # stderrFile, stderrPath = mkstemp()
-        with TempFile() as stdoutPath, TempFile() as stderrPath:
-        
-            Logger.deepDebug(f"executing command: {os.path.join(self.__path, self.binDir, command)}")
-            
-            cwd = os.getcwd()
-            os.chdir(self.__workingDir)
-            returnCode = os.system(f'{os.path.join(self.__path, self.binDir, command)} > {stdoutPath} 2> {stderrPath}')
-            os.chdir(cwd)
-            
-            if returnCode != 0:
-                Logger.error(f"Command {command} failed with return code {returnCode}")
-                with open(stdoutPath, 'r') as file:
-                    Logger.debug('stdout:\n' + file.read())
-                with open(stderrPath, 'r') as file:
-                    Logger.debug('stderr:\n' + file.read())
-                    
-                raise RuntimeError('Command failed')
-        return returnCode
-    
     def runExecutable(self, executable : str):
         Logger.debug(f"Running executable {executable} in virtual environment (working directory: {self.__workingDir})")
         self.__run(executable)
@@ -80,17 +77,10 @@ class Venv:
         Logger.debug(f"Module {module} executed successfully")
         return self
         
-    @property
-    def python(self):
-        return os.path.join(self.__path, self.binDir, 'python')
-    
-    @property
-    def pip(self):
-        return os.path.join(self.__path, self.binDir, 'pip')
 
-    @property
-    def path(self):
-        return self.__path
+#endregion
+#region STATIC FUNCTIONS
+
 
     @staticmethod
     def getInstance(path : str, workingDir : str):
@@ -100,3 +90,29 @@ class Venv:
         else:
             Logger.debug("Reusing existing Venv instance")
         return Venv.__instance
+
+#endregion
+#region PRIVATE FUNCTIONS
+
+        
+    def __run(self, command : str):
+        with TempFile() as stdoutPath, TempFile() as stderrPath:
+        
+            Logger.deepDebug(f"executing command: {os.path.join(self.__path, self.binDir, command)}")
+            
+            cwd = os.getcwd()
+            os.chdir(self.__workingDir)
+            returnCode = os.system(f'{os.path.join(self.__path, self.binDir, command)} > {stdoutPath} 2> {stderrPath}')
+            os.chdir(cwd)
+            
+            if returnCode != 0:
+                Logger.error(f"Command {command} failed with return code {returnCode}")
+                with open(stdoutPath, 'r') as file:
+                    Logger.debug('stdout:\n' + file.read())
+                with open(stderrPath, 'r') as file:
+                    Logger.debug('stderr:\n' + file.read())
+                    
+                raise RuntimeError('Command failed')
+        return returnCode
+        
+#endregion
