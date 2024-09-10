@@ -8,7 +8,7 @@ from gamuLogger import Logger
 
 Logger.setModule("Temp")
 
-TEMP = os.environ['TEMP']
+TEMP = os.environ['TEMP'] if 'TEMP' in os.environ else '/tmp'
 
 def getRandomPath():
     return os.path.join(TEMP, ''.join(random.choice(ascii_lowercase) for _ in range(10)))
