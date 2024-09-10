@@ -8,7 +8,7 @@ version = "{version}"
 authors = [
   { name="Antoine Buirey", email="antoine.buirey@gmail.com" }
 ]
-description = "A simple build tool for projects"
+description = "Python script for simplify automatic build, tests, publish and deploy of projects."
 readme = "readme.md"
 requires-python = ">=3.10"
 classifiers = [
@@ -17,6 +17,7 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-dependencies = [
-  "gamu_logger @ https://github.com/GamuNetwork/logger/releases/download/2.0.3/gamu_logger-2.0.3-py3-none-any.whl"
-]
+[project.urls]
+homepage = "https://github.com/T0ine34/builder-tool"
+issues = "https://github.com/T0ine34/builder-tool/issues"
+source = "https://github.com/T0ine34/builder-tool"
