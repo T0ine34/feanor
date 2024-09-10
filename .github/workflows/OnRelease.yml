@@ -28,5 +28,5 @@ jobs:
     - name: Publish
       uses: AButler/upload-release-assets@v3.0
       with:
-        files: "builder-tool/dist/*"
+        files: "dist/*"
         repo-token: ${{ secrets.GITHUB_TOKEN }}
