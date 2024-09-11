@@ -18,12 +18,12 @@ class Venv:
         
         self.binDir = 'bin' if IS_POSIX else 'Scripts'
         
-        Logger.deepDebug("executing command: " + f'{PYTHON} -m venv {path}')
-        returnCode = os.system(f'{PYTHON} -m venv {path}')
+        Logger.deepDebug("executing command: " + f'"{PYTHON}" -m venv {path}')
+        returnCode = os.system(f'"{PYTHON}" -m venv {path}')
         if returnCode != 0:
-            Logger.error(f"Command {PYTHON} -m venv {path} failed with return code {returnCode}")
+            Logger.error(f'Command "{PYTHON}" -m venv {path} failed with return code {returnCode}')
             sys.exit(returnCode)
-        Logger.deepDebug(f"Command {PYTHON} -m venv {path} executed successfully")
+        Logger.deepDebug(f'Command "{PYTHON}" -m venv {path} executed successfully')
         
         Venv.__instance = self
         
@@ -98,15 +98,15 @@ class Venv:
     def __run(self, command : str):
         with TempFile() as stdoutPath, TempFile() as stderrPath:
         
-            Logger.deepDebug(f"executing command: {os.path.join(self.__path, self.binDir, command)}")
+            Logger.deepDebug(f'executing command: "{os.path.join(self.__path, self.binDir, command)}"')
             
             cwd = os.getcwd()
             os.chdir(self.__workingDir)
-            returnCode = os.system(f'{os.path.join(self.__path, self.binDir, command)} > {stdoutPath} 2> {stderrPath}')
+            returnCode = os.system(f'"{os.path.join(self.__path, self.binDir, command)}" > {stdoutPath} 2> {stderrPath}')
             os.chdir(cwd)
             
             if returnCode != 0:
-                Logger.error(f"Command {command} failed with return code {returnCode}")
+                Logger.error(f'Command "{command}" failed with return code {returnCode}')
                 with open(stdoutPath, 'r') as file:
                     Logger.debug('stdout:\n' + file.read())
                 with open(stderrPath, 'r') as file:

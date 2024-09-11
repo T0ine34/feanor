@@ -222,6 +222,16 @@ Use `python {your_script}.py -h` to see the available options
             dest = path
         shutil.copy(self.tempDir + '/' + path, self.distDir + '/' + dest)
         return True
+    
+    def exportFolderContent(self, path, dest = None):
+        """Copy the content of a directory from the temporary directory to the distribution directory"""
+        Logger.debug('Exporting directory content: ' + path)
+        if dest is None:
+            dest = path
+        for root, _, filenames in os.walk(self.tempDir + '/' + path):
+            for filename in filenames:
+                shutil.copy(os.path.join(root, filename), self.distDir + '/' + dest)
+        return True
 
     def exportFolder(self, path, dest = None):
         """Copy a directory from the temporary directory to the distribution directory"""
