@@ -102,7 +102,7 @@ class Venv:
             
             cwd = os.getcwd()
             os.chdir(self.__workingDir)
-            returnCode = os.system(f'"{os.path.join(self.__path, self.binDir, command)}" > {stdoutPath} 2> {stderrPath}')
+            returnCode = os.system(f'{os.path.join(self.__path, self.binDir, command)} > {stdoutPath} 2> {stderrPath}')
             os.chdir(cwd)
             
             if returnCode != 0:
