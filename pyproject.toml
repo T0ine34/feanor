@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "build-tool"
+name = "feanor"
 version = "{version}"
 authors = [
   { name="Antoine Buirey", email="antoine.buirey@gmail.com" }
@@ -18,6 +18,6 @@ classifiers = [
 ]
 
 [project.urls]
-homepage = "https://github.com/T0ine34/builder-tool"
-issues = "https://github.com/T0ine34/builder-tool/issues"
-source = "https://github.com/T0ine34/builder-tool"
+homepage = "https://github.com/T0ine34/feanor"
+issues = "https://github.com/T0ine34/feanor/issues"
+source = "https://github.com/T0ine34/feanor"
