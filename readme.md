@@ -1,4 +1,4 @@
-# Builder Tool
+# Fëanor
 
 ## Description
 
@@ -18,7 +18,7 @@ Python script for simplify automatic build, tests, publish and deploy of project
 create a file named `pack.py` in the root of your project with the following content:
 
 ```python
-from builderTool import BaseBuilder
+from feanor import BaseBuilder
 
 class Builder(BaseBuilder):
     def Setup(self):
