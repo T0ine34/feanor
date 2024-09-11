@@ -3,7 +3,7 @@ from src.__init__ import BaseBuilder #this file use the module to build itself
 
 class Builder(BaseBuilder):
     def Setup(self):
-        self.addDirectory('src', 'src/builderTool')
+        self.addDirectory('src', 'src/feanor')
         self.addAndReplaceByPackageVersion('pyproject.toml')
         self.addFile('readme.md')
         self.venv().install('build')
