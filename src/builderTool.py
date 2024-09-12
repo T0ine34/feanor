@@ -418,8 +418,8 @@ Use `python {your_script}.py -h` to see the available options
             exported = self.__listExport()
             if self.__hasExpectedExport and len(exported) == 0:
                 Logger.warning('It seems that no files were exported, check your export functions if you expect some files to be exported')
-            else:
-                Logger.info("exported files:\n\t"+ "\n\t".join(exported))
+            elif len(exported) > 0:
+                Logger.info("\n\t".join(["exported files:"]+exported))
 
 
 #endregion
