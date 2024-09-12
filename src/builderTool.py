@@ -63,6 +63,8 @@ Use `python {your_script}.py -h` to see the available options
         self.__args = args
         self.__custom_args = custom_args
         
+        self.__hasExpectedExport = False
+        
         self.__temp_dir = TempDir()
         self.__temp_dir.create()
         
@@ -128,7 +130,7 @@ Use `python {your_script}.py -h` to see the available options
         os.makedirs(self.__args["dist_dir"], exist_ok=True)
 
 
-#region PROPERTIES
+#region PUBLIC PROPERTIES
 
     @property
     def tempDir(self):
@@ -138,9 +140,11 @@ Use `python {your_script}.py -h` to see the available options
     def packageVersion(self):
         return self.__args["package_version"]
 
+    
     @property
     def distDir(self):
-        return os.path.abspath(self.__args["dist_dir"])
+        self.__hasExpectedExport = True
+        return self.__distDir
 
 
 #endregion
@@ -220,7 +224,9 @@ Use `python {your_script}.py -h` to see the available options
         Logger.debug('Exporting file: ' + path)
         if dest is None:
             dest = path
-        shutil.copy(self.tempDir + '/' + path, self.distDir + '/' + dest)
+        shutil.copy(self.tempDir + '/' + path, self.__distDir + '/' + dest)
+        
+        self.__hasExpectedExport = True
         return True
     
     def exportFolderContent(self, path, dest = None):
@@ -230,7 +236,9 @@ Use `python {your_script}.py -h` to see the available options
             dest = path
         for root, _, filenames in os.walk(self.tempDir + '/' + path):
             for filename in filenames:
-                shutil.copy(os.path.join(root, filename), self.distDir + '/' + dest)
+                shutil.copy(os.path.join(root, filename), self.__distDir + '/' + dest)
+                
+        self.__hasExpectedExport = True
         return True
 
     def exportFolder(self, path, dest = None):
@@ -238,7 +246,9 @@ Use `python {your_script}.py -h` to see the available options
         Logger.debug('Exporting directory: ' + path)
         if dest is None:
             dest = path
-        shutil.copytree(self.tempDir + '/' + path, self.distDir + '/' + dest)
+        shutil.copytree(self.tempDir + '/' + path, self.__distDir + '/' + dest)
+        
+        self.__hasExpectedExport = True
         return True
         
     def hasArg(self, arg : str) -> bool:
@@ -264,6 +274,15 @@ Use `python {your_script}.py -h` to see the available options
         Add an argument to the command line parser
         """
         BaseBuilder.__CustomArgs[argument] = (help, default, action)
+
+
+#endregion
+#region PRIVATE PROPERTIES
+
+
+    @property
+    def __distDir(self):
+        return os.path.abspath(self.__args["dist_dir"])
 
 
 #endregion
@@ -323,10 +342,10 @@ Use `python {your_script}.py -h` to see the available options
         
     def __listExport(self):
         files = []
-        for root, _, filenames in os.walk(self.distDir):
+        for root, _, filenames in os.walk(self.__distDir):
             for filename in filenames:
                 abspath = os.path.join(root, filename)
-                files.append(abspath.replace(self.distDir+'/', ''))
+                files.append(abspath.replace(self.__distDir+'/', ''))
         return files
     
     def __run(self, configuredSteps : list[str]):
@@ -371,7 +390,7 @@ Use `python {your_script}.py -h` to see the available options
         else:
             Logger.info('Build finished successfully')
             exported = self.__listExport()
-            if len(exported) == 0:
+            if self.__hasExpectedExport and len(exported) == 0:
                 Logger.warning('It seems that no files were exported, check your export functions if you expect some files to be exported')
             else:
                 Logger.info("exported files:\n\t"+ "\n\t".join(exported))
