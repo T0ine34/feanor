@@ -242,7 +242,7 @@ Use `python {your_script}.py -h` to see the available options
                     dest = path
                 for root, _, filenames in os.walk(self.tempDir + '/' + path):
                     for filename in filenames:
-                        shutil.copy(os.path.join(root, filename), self.__distDir + '/' + dest)
+                        shutil.copy(os.path.join(root, filename), self.__distDir + '/' + filename)
                         
                 return True
             else:
