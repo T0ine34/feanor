@@ -53,6 +53,18 @@ Use `python {your_script}.py -h` to see the available options
         
         def __str__(self):
             return self.name
+        
+    class ArgumentAction(Enum):
+        STORE = 'store'
+        STORE_TRUE = 'store_true'
+        STORE_FALSE = 'store_false'
+        STORE_CONST = 'store_const'
+        APPEND = 'append'
+        APPEND_CONST = 'append_const'
+        COUNT = 'count'
+        
+        def __str__(self):
+            return self.value
     
     __CustomArgs = {}
     
@@ -283,11 +295,11 @@ Use `python {your_script}.py -h` to see the available options
 
 
     @staticmethod
-    def addArgument(argument : str, help : str, default = None, action = "store_true"):
+    def addArgument(argument : str, short : str = None, help : str = "", default = False, action : ArgumentAction = ArgumentAction.STORE_TRUE):
         """
         Add an argument to the command line parser
         """
-        BaseBuilder.__CustomArgs[argument] = (help, default, action)
+        BaseBuilder.__CustomArgs[argument] = (short, help, default, str(action))
 
 
 #endregion
@@ -435,7 +447,7 @@ Use `python {your_script}.py -h` to see the available options
         return argumentParser
         
     @staticmethod
-    def __get_args(argumentParser):
+    def __get_args(argumentParser : argparse.ArgumentParser):
         allArgs = argumentParser.parse_args()
         reservedArgsKeys = ['debug', 'deep_debug', 'no_tests', 'no_docs', 'publish', 'no_clean', 'dist_dir', 'package_version', 'help']
         
@@ -450,8 +462,18 @@ Use `python {your_script}.py -h` to see the available options
         
         customOptions = argumentParser.add_argument_group('Custom options')
         for arg in BaseBuilder.__CustomArgs:
-            helpMessage, default, action = BaseBuilder.__CustomArgs[arg]
-            customOptions.add_argument(arg, help=helpMessage, default=default, action=action)
+            short, helpMessage, default, action = BaseBuilder.__CustomArgs[arg]
+            if not arg.startswith('--'):
+                arg = '--' + arg
+            if short is not None:
+                if len(short) > 2:
+                    Logger.error(f'Short argument must be one or two characters long (found "{short}")')
+                    return
+                if not short.startswith('-'):
+                    short = '-' + short
+                customOptions.add_argument(short, arg, help=helpMessage, default=default, action=action)
+            else:
+                customOptions.add_argument(arg, help=helpMessage, default=default, action=action)
             
         args, custom_args = BaseBuilder.__get_args(argumentParser)
             
