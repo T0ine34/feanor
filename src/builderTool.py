@@ -221,35 +221,49 @@ Use `python {your_script}.py -h` to see the available options
 
     def exportFile(self, path, dest = None):
         """Copy a file from the temporary directory to the distribution directory"""
-        Logger.debug('Exporting file: ' + path)
-        if dest is None:
-            dest = path
-        shutil.copy(self.tempDir + '/' + path, self.__distDir + '/' + dest)
-        
         self.__hasExpectedExport = True
-        return True
+        if os.path.exists(self.tempDir + '/' + path):
+            Logger.debug('Exporting file: ' + path)
+            if dest is None:
+                dest = path
+            shutil.copy(self.tempDir + '/' + path, self.__distDir + '/' + dest)
+            return True
+        else:
+            Logger.warning('Trying to export a file that does not exist: ' + path)
+            return False
     
     def exportFolderContent(self, path, dest = None):
         """Copy the content of a directory from the temporary directory to the distribution directory"""
-        Logger.debug('Exporting directory content: ' + path)
-        if dest is None:
-            dest = path
-        for root, _, filenames in os.walk(self.tempDir + '/' + path):
-            for filename in filenames:
-                shutil.copy(os.path.join(root, filename), self.__distDir + '/' + dest)
-                
         self.__hasExpectedExport = True
-        return True
+        if os.path.exists(self.tempDir + '/' + path): #check if the directory exists
+            if os.listdir(self.tempDir + '/' + path): #check if the directory is not empty
+                Logger.debug('Exporting directory content: ' + path)
+                if dest is None:
+                    dest = path
+                for root, _, filenames in os.walk(self.tempDir + '/' + path):
+                    for filename in filenames:
+                        shutil.copy(os.path.join(root, filename), self.__distDir + '/' + dest)
+                        
+                return True
+            else:
+                Logger.warning('Trying to export the content of an empty directory: ' + path)
+                return False
+        else:
+            Logger.warning('Trying to export the content of a directory that does not exist: ' + path)
+            return False
 
     def exportFolder(self, path, dest = None):
         """Copy a directory from the temporary directory to the distribution directory"""
-        Logger.debug('Exporting directory: ' + path)
-        if dest is None:
-            dest = path
-        shutil.copytree(self.tempDir + '/' + path, self.__distDir + '/' + dest)
-        
         self.__hasExpectedExport = True
-        return True
+        if os.path.exists(self.tempDir + '/' + path): #check if the directory exists
+            Logger.debug('Exporting directory: ' + path)
+            if dest is None:
+                dest = path
+            shutil.copytree(self.tempDir + '/' + path, self.__distDir + '/' + dest)
+            return True
+        else:
+            Logger.warning('Trying to export a directory that does not exist: ' + path)
+            return False
         
     def hasArg(self, arg : str) -> bool:
         """Check if an argument is present"""
