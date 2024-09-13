@@ -37,6 +37,7 @@ class Builder(BaseBuilder):
 
 Use `python {your_script}.py -h` to see the available options
 """
+
     class Status(Enum):
         WAITING = 0
         RUNNING = 1
@@ -146,15 +147,18 @@ Use `python {your_script}.py -h` to see the available options
 
     @property
     def tempDir(self):
+        """The path to the temporary directory"""
         return self.__temp_dir.path
     
     @property
     def packageVersion(self):
+        """The version of the package the user wants to build"""
         return self.__args["package_version"]
 
     
     @property
     def distDir(self):
+        """The path to the distribution directory (by default, it's the 'dist' directory located in the current working directory)"""
         self.__hasExpectedExport = True
         return self.__distDir
 
@@ -164,7 +168,7 @@ Use `python {your_script}.py -h` to see the available options
 
 
     def addAndReplaceByPackageVersion(self, src, dest = None, versionString = "{version}"):
-        """Add a file to the temporary directory and replace a string by the package version"""
+        """Add a file to the temporary directory and replace all occurences of versionString in it  by the package version"""
         Logger.debug('Adding file: ' + src + ' and replacing version string by ' + self.packageVersion)
         with open(src, 'r') as file:
             content = file.read()
@@ -178,7 +182,8 @@ Use `python {your_script}.py -h` to see the available options
     def runCommand(self, command : str, hideOutput = True, debugArg = "", deepDebugArg : str = None) -> bool:
         """
         Execute a command in the temporary directory\n
-        Default value for deepDebugArg is the same as debugArg
+        Default value for deepDebugArg is the same as debugArg\n
+        Return whether the command has succeeded or not
         """
         if self.__debugLevel == LEVELS.DEBUG:
             command += " " + debugArg
@@ -324,7 +329,8 @@ Use `python {your_script}.py -h` to see the available options
             return False
         else:
             Logger.debug('Temporary directory cleaned')
-            return True
+        TempDir.cleanRemaining()
+        return True
         
     def __canStepBeStarted(self, step):
         # a better version of the previous function
@@ -406,6 +412,7 @@ Use `python {your_script}.py -h` to see the available options
                         break
 
         if self.__clean_enabled:
+            self.__temp_dir.keep = True
             self.__clean()
         else:
             Logger.warning(f'Directory {self.tempDir} wasn\'t deleted because cleaning is disabled')

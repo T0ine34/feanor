@@ -10,6 +10,10 @@ IS_POSIX = os.name == 'posix'
 Logger.setModule("VirtualVenv")
 
 class Venv:
+    """
+    Class to manage a virtual environment
+    Only one instance of this class should be created
+    """
     __instance = None
     
     def __init__(self, path : str, workingDir : str):       
@@ -31,14 +35,17 @@ class Venv:
 
     @property
     def python(self):
+        """the path to the python executable in the virtual environment"""
         return os.path.join(self.__path, self.binDir, 'python')
     
     @property
     def pip(self):
+        """the path to the pip executable in the virtual environment"""
         return os.path.join(self.__path, self.binDir, 'pip')
 
     @property
     def path(self):
+        """the path to the virtual environment"""
         return self.__path
         
 
@@ -47,6 +54,8 @@ class Venv:
         
         
     def install(self, package : str, version = None):
+        """Install a package in the virtual environment\n
+        Return the instance to chain the calls"""
         if version is not None:
             package += f'=={version}'
         Logger.debug(f"Installing package {package}")
@@ -55,23 +64,30 @@ class Venv:
         return self #to chain the calls
         
     def InstallFromRequirements(self, path : str):
+        """Install packages from a requirements file"""
         Logger.debug(f"Installing packages from requirements file {path}")
         self.__run(f'python -m pip install -r {path}')
         Logger.debug(f"Packages installed successfully")
         
     def runExecutable(self, executable : str):
+        """Run an executable in the virtual environment\n
+        Can be used to run module who create an executable\n
+        """
         Logger.debug(f"Running executable {executable} in virtual environment (working directory: {self.__workingDir})")
         self.__run(executable)
         Logger.debug(f"Executable {executable} executed successfully")
         return self
     
-    def run(self, command : str):
-        Logger.debug(f"Running command {command} in virutal environment (working directory: {self.__workingDir})")
-        result = self.__run(f"python {command}")
-        Logger.debug(f"Command {command} executed successfully")
-        return self #to chain the calls
-    
     def runModule(self, module : str):
+        """Run a module in the virtual environment\n
+        ```python
+        venv.runModule('module')
+        ```
+        is equivalent to
+        ```
+        python -m module
+        ```
+        """
         Logger.debug(f"Running module {module} in virtual environment (working directory: {self.__workingDir})")
         self.__run(f'python -m {module}')
         Logger.debug(f"Module {module} executed successfully")
@@ -84,11 +100,10 @@ class Venv:
 
     @staticmethod
     def getInstance(path : str, workingDir : str):
+        """Get the instance of the virtual environment, create it if it doesn't exist"""
         if Venv.__instance is None:
             Logger.debug("Creating new Venv instance")
             Venv.__instance = Venv(path, workingDir)
-        else:
-            Logger.debug("Reusing existing Venv instance")
         return Venv.__instance
 
 #endregion
@@ -113,6 +128,5 @@ class Venv:
                     Logger.debug('stderr:\n' + file.read())
                     
                 raise RuntimeError('Command failed')
-        return returnCode
         
 #endregion
