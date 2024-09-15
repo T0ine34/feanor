@@ -10,6 +10,7 @@ import gamuLogger
 
 from .virtualEnv import Venv
 from .temp import TempFile, TempDir
+from .version import __version__ as feanorVersion
 
 Logger.setModule('Builder')
 
@@ -126,7 +127,8 @@ Use `python {your_script}.py -h` to see the available options
             
         Logger.setLevel('stdout', self.__debugLevel)
         
-        
+        Logger.debug("Using python version : " + sys.version)
+        Logger.debug("Using feanor version : " + feanorVersion)
         Logger.debug("Using gamuLogger version : " + gamuLogger.__version__)
         Logger.debug('Using temporary directory: ' + os.path.abspath(self.__temp_dir.path))
         Logger.debug('Using distribution directory: ' + os.path.abspath(self.__args["dist_dir"]))
@@ -455,53 +457,63 @@ Use `python {your_script}.py -h` to see the available options
         
     @staticmethod
     def __get_args(argumentParser : argparse.ArgumentParser):
-        allArgs = argumentParser.parse_args()
-        reservedArgsKeys = ['debug', 'deep_debug', 'no_tests', 'no_docs', 'publish', 'no_clean', 'dist_dir', 'package_version', 'help']
-        
-        # split the args into two lists (args, custom_args)
-        args = {key: value for key, value in vars(allArgs).items() if key in reservedArgsKeys}
-        custom_args = {key: value for key, value in vars(allArgs).items() if key not in reservedArgsKeys}
-        return args, custom_args
+        try:
+            allArgs = argumentParser.parse_args()
+        except SystemExit:
+            Logger.error('Error while parsing arguments; use -h to see the available options')
+            raise RuntimeError('Error while parsing arguments')
+        else:
+            reservedArgsKeys = ['debug', 'deep_debug', 'no_tests', 'no_docs', 'publish', 'no_clean', 'dist_dir', 'package_version', 'help']
+            
+            # split the args into two lists (args, custom_args)
+            args = {key: value for key, value in vars(allArgs).items() if key in reservedArgsKeys}
+            custom_args = {key: value for key, value in vars(allArgs).items() if key not in reservedArgsKeys}
+            return args, custom_args
     
     @staticmethod
     def __execute():
-        argumentParser = BaseBuilder.__config_args()
-        
-        customOptions = argumentParser.add_argument_group('Custom options')
-        for arg in BaseBuilder.__CustomArgs:
-            short, helpMessage, default, action = BaseBuilder.__CustomArgs[arg]
-            if not arg.startswith('--'):
-                arg = '--' + arg
-            if short is not None:
-                if len(short) > 2:
-                    Logger.error(f'Short argument must be one or two characters long (found "{short}")')
-                    return
-                if not short.startswith('-'):
-                    short = '-' + short
-                customOptions.add_argument(short, arg, help=helpMessage, default=default, action=action)
-            else:
-                customOptions.add_argument(arg, help=helpMessage, default=default, action=action)
+        try:
+            argumentParser = BaseBuilder.__config_args()
             
-        args, custom_args = BaseBuilder.__get_args(argumentParser)
-            
-        if 'help' in args and args['help']:
-            argumentParser.print_help()
+            customOptions = argumentParser.add_argument_group('Custom options')
+            for arg in BaseBuilder.__CustomArgs:
+                short, helpMessage, default, action = BaseBuilder.__CustomArgs[arg]
+                if not arg.startswith('--'):
+                    arg = '--' + arg
+                if short is not None:
+                    if len(short) > 2:
+                        Logger.error(f'Short argument must be one or two characters long (found "{short}")')
+                        return
+                    if not short.startswith('-'):
+                        short = '-' + short
+                    customOptions.add_argument(short, arg, help=helpMessage, default=default, action=action)
+                else:
+                    customOptions.add_argument(arg, help=helpMessage, default=default, action=action)
+                
+            args, custom_args = BaseBuilder.__get_args(argumentParser)
+                
+            if 'help' in args and args['help']:
+                argumentParser.print_help()
+                return
+        except RuntimeError:
+            Logger.critical('Error while parsing arguments')
             return
         
-        subClasses = BaseBuilder.__subclasses__()
-        if len(subClasses) == 0:
-            Logger.critical('No builders found')
-            sys.exit(1)
-        elif len(subClasses) > 1:
-            Logger.critical('Multiple builders found')
-            sys.exit(1)
-        
-        builderClass = subClasses[0]
-        
-        possibleSteps = ['Setup', 'Tests', 'BuildTests', 'Docs', 'Build', 'Publish']
-        steps = [step for step in builderClass.__dict__ if step in possibleSteps]
-        builderInstance = builderClass(args, custom_args)
-        builderInstance.__run(steps)
+        else:
+            subClasses = BaseBuilder.__subclasses__()
+            if len(subClasses) == 0:
+                Logger.critical('No builders found')
+                return
+            elif len(subClasses) > 1:
+                Logger.critical('Multiple builders found')
+                return
+            
+            builderClass = subClasses[0]
+            
+            possibleSteps = ['Setup', 'Tests', 'BuildTests', 'Docs', 'Build', 'Publish']
+            steps = [step for step in builderClass.__dict__ if step in possibleSteps]
+            builderInstance = builderClass(args, custom_args)
+            builderInstance.__run(steps)
     
     @staticmethod
     def register_execute():
