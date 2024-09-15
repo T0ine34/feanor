@@ -16,6 +16,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "gamuLogger"
+]
 
 [project.urls]
 homepage = "https://github.com/T0ine34/feanor"
