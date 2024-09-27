@@ -14,7 +14,7 @@ def loadPackFile():
 
 def main():
     pack = loadPackFile()
-    BaseBuilder._BaseBuilder__execute()
+    BaseBuilder.execute()
     
 
 if __name__ == '__main__':

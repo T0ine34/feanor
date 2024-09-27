@@ -484,7 +484,7 @@ Use `python {your_script}.py -h` to see the available options
             return args, custom_args
     
     @staticmethod
-    def __execute():
+    def execute():
         try:
             argumentParser = BaseBuilder.__config_args()
 
@@ -534,15 +534,5 @@ Use `python {your_script}.py -h` to see the available options
             steps = [step for step in builderClass.__dict__ if step in possibleSteps]
             builderInstance = builderClass(args, custom_args)
             builderInstance.__run(steps)
-    
-    @staticmethod
-    def register_execute():
-        if sys.argv[0].endswith(".py"):
-            import atexit # I import it here to avoid importing it in the global scope, in particular if the user started using the script entry point
-            #called using "python {your_script}.py"
-            atexit.register(BaseBuilder.__execute)
         
 #endregion
-    
-BaseBuilder.register_execute()
-
