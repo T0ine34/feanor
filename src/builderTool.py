@@ -525,7 +525,8 @@ Use `python {your_script}.py -h` to see the available options
 
             possibleSteps = {'Setup', 'Tests', 'BuildTests', 'Docs', 'Build', 'Publish'}
 
-            authorizedElements = {'__doc__', '__module__'} + possibleSteps
+            # authorizedElements = {'__doc__', '__module__'} + possibleSteps
+            authorizedElements = {'__doc__', '__module__'}.union(possibleSteps)
             for element in builderClass.__dict__:
                 if element not in authorizedElements:
                     Logger.warning(f'Unknown element in builder class: "{element}"; ignoring it')
