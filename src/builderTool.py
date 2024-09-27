@@ -15,6 +15,16 @@ Logger.setModule('Builder')
 
 MAIN_FILENAME = Path(__main__.__file__).name
 
+
+class AbstractClassError(Exception):
+    def __init__(self, message):
+        super().__init__(message)
+        
+    def __str__(self):
+        return self.message
+    
+
+
 class BaseBuilder:
     """
 Create a new builder by subclassing this class and implementing the steps as methods
@@ -71,16 +81,16 @@ Use `python {your_script}.py -h` to see the available options
     
     def __init__(self, args : dict[str, any], custom_args : dict[str, any]):
         if self.__class__ == BaseBuilder:
-            raise Exception('BaseBuilder is an abstract class and cannot be instantiated')
-        
+            raise AbstractClassError('BaseBuilder is an abstract class and cannot be instantiated')
+
         self.__args = args
         self.__custom_args = custom_args
-        
+
         self.__hasExpectedExport = False
-        
+
         self.__temp_dir = TempDir()
         self.__temp_dir.create()
-        
+
         self.__steps = {
             "Setup":        self.Status.WAITING,
             "Build":        self.Status.WAITING,
@@ -89,11 +99,11 @@ Use `python {your_script}.py -h` to see the available options
             "Docs":         self.Status.DISABLED    if self.__args["no_docs"]   else self.Status.WAITING,
             "Publish":      self.Status.WAITING     if self.__args["publish"]   else self.Status.DISABLED
         }
-        
+
         self.__clean_enabled = not self.__args["no_clean"]
-        
+
         self.__remainingSteps = [step for step in self.__steps if self.__steps[step] != self.Status.DISABLED]
-        
+
         self.__stepDependencies = {
             "Setup": {},
             "Build": {
@@ -116,31 +126,31 @@ Use `python {your_script}.py -h` to see the available options
                 "Docs" : self.RequireMode.OPTIONAL
             }
         } #type: dict[str, dict[str, BaseBuilder.RequireMode]]
-        
+
         self.__debugLevel = LEVELS.INFO
-        
+
         if self.__args["debug"]:
             self.__debugLevel = LEVELS.DEBUG
         elif self.__args["deep_debug"]:
             self.__debugLevel = LEVELS.DEEP_DEBUG
-            
+
         Logger.setLevel('stdout', self.__debugLevel)
-        
-        Logger.debug("Using python version : " + sys.version)
-        Logger.debug("Using feanor version : " + feanorVersion)
-        Logger.debug("Using gamuLogger version : " + gamuLogger.__version__)
-        Logger.debug('Using temporary directory: ' + os.path.abspath(self.__temp_dir.path))
+
+        Logger.debug(f"Using python version : {sys.version}")
+        Logger.debug(f"Using feanor version : {feanorVersion}")
+        Logger.debug(f"Using gamuLogger version : {gamuLogger.__version__}")
+        Logger.debug(f'Using temporary directory: {os.path.abspath(self.__temp_dir.path)}')
         Logger.debug('Using distribution directory: ' + os.path.abspath(self.__args["dist_dir"]))
-        
+
         # clear the dist directory
         try:
             shutil.rmtree(self.__args["dist_dir"])
         except FileNotFoundError:
             pass
         except Exception as e:
-            Logger.error('Error while cleaning dist directory: ' + str(e))
+            Logger.error(f'Error while cleaning dist directory: {str(e)}')
             sys.exit(1)
-        
+
         os.makedirs(self.__args["dist_dir"], exist_ok=True)
 
 
@@ -169,14 +179,14 @@ Use `python {your_script}.py -h` to see the available options
 
 
     def addAndReplaceByPackageVersion(self, src, dest = None, versionString = "{version}"):
-        """Add a file to the temporary directory and replace all occurences of versionString in it  by the package version"""
-        Logger.debug('Adding file: ' + src + ' and replacing version string by ' + self.packageVersion)
+        """Add a file to the temporary directory and replace all occurrences of versionString in it  by the package version"""
+        Logger.debug(f'Adding file: {src} and replacing version string by {self.packageVersion}')
         with open(src, 'r') as file:
             content = file.read()
         content = content.replace(versionString, self.packageVersion)
         if dest is None:
             dest = src
-        with open(self.tempDir + '/' + dest, 'w') as file:
+        with open(f'{self.tempDir}/{dest}', 'w') as file:
             file.write(content)
         return True
 
@@ -187,31 +197,31 @@ Use `python {your_script}.py -h` to see the available options
         Return whether the command has succeeded or not
         """
         if self.__debugLevel == LEVELS.DEBUG:
-            command += " " + debugArg
+            command += f" {debugArg}"
         elif self.__debugLevel == LEVELS.DEEP_DEBUG:
             command += " " + (deepDebugArg if deepDebugArg is not None else debugArg)
         Logger.debug(f'Executing command {command}\n    working directory: {self.tempDir}')
         if hideOutput:
-            
+
             with TempFile() as stdoutPath, TempFile() as stderrPath:
-        
+
                 cwd = os.getcwd()
                 os.chdir(self.tempDir)
                 returnCode = os.system(f'{command} > {stdoutPath} 2> {stderrPath}')
                 os.chdir(cwd)
-            
+
                 if returnCode != 0:
                     Logger.error(f'Task failed with return code {returnCode}')
                     with open(stdoutPath, 'r') as file:
                         Logger.debug('stdout:\n' + file.read())
                     with open(stderrPath, 'r') as file:
                         Logger.debug('stderr:\n' + file.read())
-                    
+
                     raise RuntimeError('Command failed')
                 else:
                     Logger.debug('Command executed successfully')
                     return True
-            
+
         else:
             returnCode = os.system(f'{command}')
             if returnCode != 0:
@@ -223,64 +233,70 @@ Use `python {your_script}.py -h` to see the available options
 
     def addFile(self, path, dest = None):
         """Copy a file to the temporary directory"""
-        Logger.debug('Adding file: ' + path)
+        Logger.debug(f'Adding file: {path}')
         if dest is None:
             dest = path
-        shutil.copy(path, self.tempDir + '/' + dest)
+        shutil.copy(path, f'{self.tempDir}/{dest}')
         return True   
 
     def addDirectory(self, path, dest = None):
         """Copy a directory to the temporary directory"""
-        Logger.debug('Adding directory: ' + path)
+        Logger.debug(f'Adding directory: {path}')
         if dest is None:
             dest = path
-        shutil.copytree(path, self.tempDir + '/' + dest, ignore=shutil.ignore_patterns('*.pyc', '*.pyo', '__pycache__'))
+        shutil.copytree(
+            path,
+            f'{self.tempDir}/{dest}',
+            ignore=shutil.ignore_patterns('*.pyc', '*.pyo', '__pycache__'),
+        )
         return True
 
     def exportFile(self, path, dest = None):
         """Copy a file from the temporary directory to the distribution directory"""
         self.__hasExpectedExport = True
-        if os.path.exists(self.tempDir + '/' + path):
-            Logger.debug('Exporting file: ' + path)
+        if os.path.exists(f'{self.tempDir}/{path}'):
+            Logger.debug(f'Exporting file: {path}')
             if dest is None:
                 dest = path
-            shutil.copy(self.tempDir + '/' + path, self.__distDir + '/' + dest)
+            shutil.copy(f'{self.tempDir}/{path}', f'{self.__distDir}/{dest}')
             return True
         else:
-            Logger.warning('Trying to export a file that does not exist: ' + path)
+            Logger.warning(f'Trying to export a file that does not exist: {path}')
             return False
     
     def exportFolderContent(self, path, dest = None):
         """Copy the content of a directory from the temporary directory to the distribution directory"""
         self.__hasExpectedExport = True
-        if os.path.exists(self.tempDir + '/' + path): #check if the directory exists
-            if os.listdir(self.tempDir + '/' + path): #check if the directory is not empty
-                Logger.debug('Exporting directory content: ' + path)
+        if os.path.exists(f'{self.tempDir}/{path}'): #check if the directory exists
+            if os.listdir(f'{self.tempDir}/{path}'): #check if the directory is not empty
+                Logger.debug(f'Exporting directory content: {path}')
                 if dest is None:
                     dest = path
-                for root, _, filenames in os.walk(self.tempDir + '/' + path):
+                for root, _, filenames in os.walk(f'{self.tempDir}/{path}'):
                     for filename in filenames:
-                        shutil.copy(os.path.join(root, filename), self.__distDir + '/' + filename)
-                        
+                        shutil.copy(os.path.join(root, filename), f'{self.__distDir}/{filename}')
+
                 return True
             else:
-                Logger.warning('Trying to export the content of an empty directory: ' + path)
+                Logger.warning(f'Trying to export the content of an empty directory: {path}')
                 return False
         else:
-            Logger.warning('Trying to export the content of a directory that does not exist: ' + path)
+            Logger.warning(
+                f'Trying to export the content of a directory that does not exist: {path}'
+            )
             return False
 
     def exportFolder(self, path, dest = None):
         """Copy a directory from the temporary directory to the distribution directory"""
         self.__hasExpectedExport = True
-        if os.path.exists(self.tempDir + '/' + path): #check if the directory exists
-            Logger.debug('Exporting directory: ' + path)
+        if os.path.exists(f'{self.tempDir}/{path}'): #check if the directory exists
+            Logger.debug(f'Exporting directory: {path}')
             if dest is None:
                 dest = path
-            shutil.copytree(self.tempDir + '/' + path, self.__distDir + '/' + dest)
+            shutil.copytree(f'{self.tempDir}/{path}', f'{self.__distDir}/{dest}')
             return True
         else:
-            Logger.warning('Trying to export a directory that does not exist: ' + path)
+            Logger.warning(f'Trying to export a directory that does not exist: {path}')
             return False
         
     def hasArg(self, arg : str) -> bool:
@@ -293,7 +309,7 @@ Use `python {your_script}.py -h` to see the available options
 
     def venv(self):
         """Create a virtual environment in the temporary directory"""
-        return Venv.getInstance(self.tempDir + '/env', self.tempDir)
+        return Venv.getInstance(f'{self.tempDir}/env', self.tempDir)
 
 
 #endregion
@@ -326,7 +342,7 @@ Use `python {your_script}.py -h` to see the available options
         try:
             self.__temp_dir.remove()
         except Exception as e:
-            Logger.error('Error while cleaning temp directory: ' + str(e))
+            Logger.error(f'Error while cleaning temp directory: {str(e)}')
             return False
         else:
             Logger.debug('Temporary directory cleaned')
@@ -366,19 +382,17 @@ Use `python {your_script}.py -h` to see the available options
         try:
             hasSucceeded = getattr(self, step)()
         except Exception as e:
-            Logger.error('Step "' + step + '" raised an exception: ' + str(e))
+            Logger.error(f'Step "{step}" raised an exception: {str(e)}')
             return False
         else:
-            if hasSucceeded is None:
-                return True
-            return hasSucceeded
+            return True if hasSucceeded is None else hasSucceeded
         
     def __listExport(self):
         files = []
         for root, _, filenames in os.walk(self.__distDir):
             for filename in filenames:
                 abspath = os.path.join(root, filename)
-                files.append(abspath.replace(self.__distDir+'/', ''))
+                files.append(abspath.replace(f'{self.__distDir}/', ''))
         return files
     
     def __run(self, configuredSteps : list[str]):
@@ -387,28 +401,28 @@ Use `python {your_script}.py -h` to see the available options
                 self.__steps[step] = self.Status.DISABLED
                 if step in self.__remainingSteps:
                     self.__remainingSteps.remove(step)
-                Logger.debug('Step "' + step + '" disabled')
-        
-        
+                Logger.debug(f'Step "{step}" disabled')
+
+
         HasFailed = False
         while len(self.__remainingSteps) > 0 and not HasFailed:
             for step in self.__steps:
                 if self.__steps[step] == self.Status.DISABLED:
                     continue
-                Logger.deepDebug(f"evaluating step {step}\nremaining : " + str(self.__remainingSteps))
+                Logger.deepDebug(f"evaluating step {step}\nremaining : {str(self.__remainingSteps)}")
                 if self.__steps[step] == self.Status.WAITING and self.__canStepBeStarted(step):
-                    Logger.info('Starting step "' + step + '"')
+                    Logger.info(f'Starting step "{step}"')
                     self.__steps[step] = self.Status.RUNNING
-                    
+
                     hasSucceeded = self.__runStep(step)
-                    Logger.deepDebug('Step "' + step + '" returned ' + str(hasSucceeded))
-                        
+                    Logger.deepDebug(f'Step "{step}" returned {str(hasSucceeded)}')
+
                     if hasSucceeded:
                         self.__steps[step] = self.Status.FINISHED
                         self.__remainingSteps.remove(step)
                     else:
                         self.__steps[step] = self.Status.FAILED
-                        Logger.error('Step "' + step + '" failed')
+                        Logger.error(f'Step "{step}" failed')
                         HasFailed = True
                         break
 
@@ -417,7 +431,7 @@ Use `python {your_script}.py -h` to see the available options
             self.__clean()
         else:
             Logger.warning(f'Directory {self.tempDir} wasn\'t deleted because cleaning is disabled')
-                    
+
         if HasFailed:
             Logger.critical('A step has failed')
             sys.exit(1)
@@ -458,12 +472,12 @@ Use `python {your_script}.py -h` to see the available options
     def __get_args(argumentParser : argparse.ArgumentParser):
         try:
             allArgs = argumentParser.parse_args()
-        except SystemExit:
+        except SystemExit as e:
             Logger.error('Error while parsing arguments; use -h to see the available options')
-            raise RuntimeError('Error while parsing arguments')
+            raise RuntimeError('Error while parsing arguments') from e
         else:
             reservedArgsKeys = ['debug', 'deep_debug', 'no_tests', 'no_docs', 'publish', 'no_clean', 'dist_dir', 'package_version', 'help']
-            
+
             # split the args into two lists (args, custom_args)
             args = {key: value for key, value in vars(allArgs).items() if key in reservedArgsKeys}
             custom_args = {key: value for key, value in vars(allArgs).items() if key not in reservedArgsKeys}
@@ -473,31 +487,31 @@ Use `python {your_script}.py -h` to see the available options
     def __execute():
         try:
             argumentParser = BaseBuilder.__config_args()
-            
+
             customOptions = argumentParser.add_argument_group('Custom options')
             for arg in BaseBuilder.__CustomArgs:
                 short, helpMessage, default, action = BaseBuilder.__CustomArgs[arg]
                 if not arg.startswith('--'):
-                    arg = '--' + arg
+                    arg = f'--{arg}'
                 if short is not None:
                     if len(short) > 2:
                         Logger.error(f'Short argument must be one or two characters long (found "{short}")')
                         return
                     if not short.startswith('-'):
-                        short = '-' + short
+                        short = f'-{short}'
                     customOptions.add_argument(short, arg, help=helpMessage, default=default, action=action)
                 else:
                     customOptions.add_argument(arg, help=helpMessage, default=default, action=action)
-                
+
             args, custom_args = BaseBuilder.__get_args(argumentParser)
-                
+
             if 'help' in args and args['help']:
                 argumentParser.print_help()
                 return
         except RuntimeError:
             Logger.critical('Error while parsing arguments')
             return
-        
+
         else:
             subClasses = BaseBuilder.__subclasses__()
             if len(subClasses) == 0:
@@ -506,16 +520,16 @@ Use `python {your_script}.py -h` to see the available options
             elif len(subClasses) > 1:
                 Logger.critical('Multiple builders found')
                 return
-            
+
             builderClass = subClasses[0]
-            
-            possibleSteps = ['Setup', 'Tests', 'BuildTests', 'Docs', 'Build', 'Publish']
-            
-            authorizedElements = ['__doc__', '__module__'] + possibleSteps
+
+            possibleSteps = {'Setup', 'Tests', 'BuildTests', 'Docs', 'Build', 'Publish'}
+
+            authorizedElements = {'__doc__', '__module__'} + possibleSteps
             for element in builderClass.__dict__:
                 if element not in authorizedElements:
                     Logger.warning(f'Unknown element in builder class: "{element}"; ignoring it')
-                    
+
             steps = [step for step in builderClass.__dict__ if step in possibleSteps]
             builderInstance = builderClass(args, custom_args)
             builderInstance.__run(steps)
