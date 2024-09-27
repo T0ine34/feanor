@@ -517,7 +517,9 @@ Use `python {your_script}.py -h` to see the available options
     
     @staticmethod
     def register_execute():
-        atexit.register(BaseBuilder.__execute)
+        if sys.argv[0] != "feanor":
+            #called using "python {your_script}.py"
+            atexit.register(BaseBuilder.__execute)
         
 #endregion
     

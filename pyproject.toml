@@ -24,3 +24,6 @@ dependencies = [
 homepage = "https://github.com/T0ine34/feanor"
 issues = "https://github.com/T0ine34/feanor/issues"
 source = "https://github.com/T0ine34/feanor"
+
+[project.scripts]
+feanor = "feanor.__main__:main"
