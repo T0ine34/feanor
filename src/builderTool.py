@@ -1,7 +1,6 @@
 import argparse
 import os, sys, shutil
 from enum import Enum
-import atexit
 from pathlib import Path
 import __main__
 
@@ -511,13 +510,20 @@ Use `python {your_script}.py -h` to see the available options
             builderClass = subClasses[0]
             
             possibleSteps = ['Setup', 'Tests', 'BuildTests', 'Docs', 'Build', 'Publish']
+            
+            authorizedElements = ['__doc__', '__module__'] + possibleSteps
+            for element in builderClass.__dict__:
+                if element not in authorizedElements:
+                    Logger.warning(f'Unknown element in builder class: "{element}"; ignoring it')
+                    
             steps = [step for step in builderClass.__dict__ if step in possibleSteps]
             builderInstance = builderClass(args, custom_args)
             builderInstance.__run(steps)
     
     @staticmethod
     def register_execute():
-        if sys.argv[0] != "feanor":
+        if sys.argv[0].endswith(".py"):
+            import atexit # I import it here to avoid importing it in the global scope, in particular if the user started using the script entry point
             #called using "python {your_script}.py"
             atexit.register(BaseBuilder.__execute)
         

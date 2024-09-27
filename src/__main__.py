@@ -15,3 +15,7 @@ def loadPackFile():
 def main():
     pack = loadPackFile()
     BaseBuilder._BaseBuilder__execute()
+    
+
+if __name__ == '__main__':
+    main()
