@@ -7,8 +7,9 @@ import __main__
 from gamuLogger import Logger, LEVELS
 import gamuLogger
 
+from feanorTempDir import TempFile, TempDir
+
 from .virtualEnv import Venv
-from .temp import TempFile, TempDir
 from .version import __version__ as feanorVersion
 
 Logger.setModule('Builder')

@@ -1,6 +1,6 @@
 from gamuLogger import Logger
 import sys, os
-from .temp import TempFile
+from feanorTempDir import TempFile
 
 
 PYTHON = sys.executable
