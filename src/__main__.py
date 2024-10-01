@@ -3,7 +3,7 @@ import importlib.util
 
 from .__init__ import BaseBuilder, __version__
 
-def loadPackFile():
+def loadPackFile() -> importlib.ModuleType:
     packFile = os.path.join(os.getcwd(), 'pack.py')
     if not os.path.exists(packFile):
         raise FileNotFoundError(f"Could not find pack file at {packFile}")
@@ -12,7 +12,7 @@ def loadPackFile():
     spec.loader.exec_module(pack)
     return pack
 
-def main():
+def main() -> None:
     pack = loadPackFile()
     BaseBuilder.execute()
     

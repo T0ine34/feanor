@@ -2,7 +2,8 @@ import argparse
 import os, sys, shutil
 from enum import Enum
 from pathlib import Path
-import __main__
+
+from .__main__ import __file__
 
 from gamuLogger import Logger, LEVELS
 import gamuLogger
@@ -14,14 +15,14 @@ from .version import __version__ as feanorVersion
 
 Logger.setModule('Builder')
 
-MAIN_FILENAME = Path(__main__.__file__).name
+MAIN_FILENAME = Path(__file__).name
 
 
 class AbstractClassError(Exception):
     def __init__(self, message):
         super().__init__(message)
         
-    def __str__(self):
+    def __str__(self) -> str:
         return self.message
     
 
@@ -78,7 +79,7 @@ Use `python {your_script}.py -h` to see the available options
         def __str__(self):
             return self.value
     
-    __CustomArgs = {}
+    __CustomArgs = {} #type: dict[str, tuple[str, str, any, str]]
     
     def __init__(self, args : dict[str, any], custom_args : dict[str, any]):
         if self.__class__ == BaseBuilder:

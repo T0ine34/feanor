@@ -3,9 +3,9 @@ import sys, os
 from feanorTempDir import TempFile
 
 
-PYTHON = sys.executable
-NULL_TARGET = '/dev/null' if os.name == 'posix' else 'nul'
-IS_POSIX = os.name == 'posix'
+PYTHON = sys.executable #type: str
+NULL_TARGET = '/dev/null' if os.name == 'posix' else 'nul' #type: str
+IS_POSIX = os.name == 'posix' #type: bool
 
 Logger.setModule("VirtualVenv")
 
@@ -74,7 +74,7 @@ class Venv:
         """Run an executable in the virtual environment\n
         Can be used to run module who create an executable\n
         """
-        Logger.debug(f"Running executable {executable} with arguments {" ".join(args)} in virtual environment (working directory: {self.__workingDir})")
+        Logger.debug(f"Running executable {executable} with arguments {' '.join(args)} in virtual environment (working directory: {self.__workingDir})")
         self.__run(executable, *args)
         Logger.debug(f"Executable {executable} executed successfully")
         return self
