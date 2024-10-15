@@ -2,8 +2,7 @@ import argparse
 import os, sys, shutil
 from enum import Enum
 from pathlib import Path
-
-from .__main__ import __file__
+import importlib.metadata
 
 from gamuLogger import Logger, LEVELS
 import gamuLogger
@@ -11,12 +10,11 @@ import gamuLogger
 from feanorTempDir import TempFile, TempDir
 
 from .virtualEnv import Venv
-from .version import __version__ as feanorVersion
 
 Logger.setModule('Builder')
 
-MAIN_FILENAME = Path(__file__).name
-
+feanorVersion = importlib.metadata.version('feanor')
+gamuLoggerVersion = importlib.metadata.version('gamuLogger')
 
 class AbstractClassError(Exception):
     def __init__(self, message):
@@ -140,7 +138,7 @@ Use `python {your_script}.py -h` to see the available options
 
         Logger.debug(f"Using python version : {sys.version}")
         Logger.debug(f"Using feanor version : {feanorVersion}")
-        Logger.debug(f"Using gamuLogger version : {gamuLogger.__version__}")
+        Logger.debug(f"Using gamuLogger version : {gamuLoggerVersion}")
         Logger.debug(f'Using temporary directory: {os.path.abspath(self.__temp_dir.path)}')
         Logger.debug('Using distribution directory: ' + os.path.abspath(self.__args["dist_dir"]))
 
@@ -451,7 +449,9 @@ Use `python {your_script}.py -h` to see the available options
 
     @staticmethod
     def __config_args():
-        argumentParser = argparse.ArgumentParser(description='Builder tool', prog=MAIN_FILENAME, add_help=False)
+        argumentParser = argparse.ArgumentParser(description='Builder tool', prog="feanor", add_help=False)
+        
+        argumentParser.add_argument('build-file', help='The path to the build file (default : "%(default)s")', type=str, default='pack.py', nargs='?')
         
         loggerOptions = argumentParser.add_mutually_exclusive_group()
         loggerOptions.add_argument('--debug', action='store_true', help='Enable debug messages')
@@ -465,7 +465,7 @@ Use `python {your_script}.py -h` to see the available options
         buildersOptions.add_argument('--dist-dir', help='Distribution directory (where to save the built files) (default : "%(default)s")', type=str, default='dist')
         buildersOptions.add_argument('-pv', '--package-version', help='set the version of the package you want to build (default : "%(default)s")', type=str, default='0.0.0')
         
-        argumentParser.add_argument('--version', '-v', action='version', version='%(prog)s 1.0')
+        argumentParser.add_argument('--version', '-v', action='store_true', help='Show the version of the tool')
         argumentParser.add_argument('--help', '-h', action='store_true', help='Show this help message and exit')
         
         return argumentParser
@@ -478,7 +478,7 @@ Use `python {your_script}.py -h` to see the available options
             Logger.error('Error while parsing arguments; use -h to see the available options')
             raise RuntimeError('Error while parsing arguments') from e
         else:
-            reservedArgsKeys = ['debug', 'deep_debug', 'no_tests', 'no_docs', 'publish', 'no_clean', 'dist_dir', 'package_version', 'help']
+            reservedArgsKeys = ['debug', 'deep_debug', 'no_tests', 'no_docs', 'publish', 'no_clean', 'dist_dir', 'package_version', 'help', 'version']
 
             # split the args into two lists (args, custom_args)
             args = {key: value for key, value in vars(allArgs).items() if key in reservedArgsKeys}
@@ -490,6 +490,7 @@ Use `python {your_script}.py -h` to see the available options
         try:
             argumentParser = BaseBuilder.__config_args()
 
+            # add user defined arguments
             customOptions = argumentParser.add_argument_group('Custom options')
             for arg in BaseBuilder.__CustomArgs:
                 short, helpMessage, default, action = BaseBuilder.__CustomArgs[arg]
@@ -507,9 +508,13 @@ Use `python {your_script}.py -h` to see the available options
 
             args, custom_args = BaseBuilder.__get_args(argumentParser)
 
+            if 'version' in args and args['version']:
+                Logger.info(f"feanor version : {feanorVersion}")
+                return
             if 'help' in args and args['help']:
                 argumentParser.print_help()
                 return
+                
         except RuntimeError:
             Logger.critical('Error while parsing arguments')
             return
@@ -527,7 +532,6 @@ Use `python {your_script}.py -h` to see the available options
 
             possibleSteps = {'Setup', 'Tests', 'BuildTests', 'Docs', 'Build', 'Publish'}
 
-            # authorizedElements = {'__doc__', '__module__'} + possibleSteps
             authorizedElements = {'__doc__', '__module__'}.union(possibleSteps)
             for element in builderClass.__dict__:
                 if element not in authorizedElements:
