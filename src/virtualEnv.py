@@ -1,11 +1,11 @@
 from gamuLogger import Logger
 import sys, os
-from .temp import TempFile
+from feanorTempDir import TempFile
 
 
-PYTHON = sys.executable
-NULL_TARGET = '/dev/null' if os.name == 'posix' else 'nul'
-IS_POSIX = os.name == 'posix'
+PYTHON = sys.executable #type: str
+NULL_TARGET = '/dev/null' if os.name == 'posix' else 'nul' #type: str
+IS_POSIX = os.name == 'posix' #type: bool
 
 Logger.setModule("VirtualVenv")
 
@@ -66,19 +66,20 @@ class Venv:
     def InstallFromRequirements(self, path : str):
         """Install packages from a requirements file"""
         Logger.debug(f"Installing packages from requirements file {path}")
-        self.__run(f'python -m pip install -r {path}')
+        # self.__run(f'python -m pip install -r {path}')
+        self.__run('python', '-m', 'pip', 'install', '-r', path)
         Logger.debug(f"Packages installed successfully")
         
-    def runExecutable(self, executable : str):
+    def runExecutable(self, executable : str, *args : str):
         """Run an executable in the virtual environment\n
         Can be used to run module who create an executable\n
         """
-        Logger.debug(f"Running executable {executable} in virtual environment (working directory: {self.__workingDir})")
-        self.__run(executable)
+        Logger.debug(f"Running executable {executable} with arguments {' '.join(args)} in virtual environment (working directory: {self.__workingDir})")
+        self.__run(executable, *args)
         Logger.debug(f"Executable {executable} executed successfully")
         return self
     
-    def runModule(self, module : str):
+    def runModule(self, module : str, *args : str):
         """Run a module in the virtual environment\n
         ```python
         venv.runModule('module')
@@ -88,8 +89,8 @@ class Venv:
         python -m module
         ```
         """
-        Logger.debug(f"Running module {module} in virtual environment (working directory: {self.__workingDir})")
-        self.__run(f'python -m {module}')
+        Logger.debug(f'Running module "{module}" with arguments {" ".join(args)} in virtual environment (working directory: {self.__workingDir})')
+        self.__run('python', '-m', module, *args)
         Logger.debug(f"Module {module} executed successfully")
         return self
         
@@ -110,8 +111,11 @@ class Venv:
 #region PRIVATE FUNCTIONS
 
         
-    def __run(self, command : str):
+    def __run(self, command : str, *args : str):
         with TempFile() as stdoutPath, TempFile() as stderrPath:
+            
+            if len(args) > 0:
+                command += ' ' + ' '.join(args)
         
             Logger.deepDebug(f'executing command: "{os.path.join(self.__path, self.binDir, command)}"')
             

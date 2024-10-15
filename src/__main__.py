@@ -1,9 +1,11 @@
 import os
 import importlib.util
+import importlib
+from types import ModuleType
 
-from .__init__ import BaseBuilder, __version__
+from .__init__ import BaseBuilder
 
-def loadPackFile():
+def loadPackFile() -> ModuleType:
     packFile = os.path.join(os.getcwd(), 'pack.py')
     if not os.path.exists(packFile):
         raise FileNotFoundError(f"Could not find pack file at {packFile}")
@@ -12,9 +14,9 @@ def loadPackFile():
     spec.loader.exec_module(pack)
     return pack
 
-def main():
+def main() -> None:
     pack = loadPackFile()
-    BaseBuilder._BaseBuilder__execute()
+    BaseBuilder.execute()
     
 
 if __name__ == '__main__':

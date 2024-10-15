@@ -1,1 +1,2 @@
 gamuLogger==2.0.5
+feanor==1.0.8

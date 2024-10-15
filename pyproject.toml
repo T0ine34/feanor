@@ -17,7 +17,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "gamuLogger"
+    "gamuLogger",
+    "feanorTempDir"
 ]
 
 [project.urls]

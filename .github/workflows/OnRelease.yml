@@ -24,7 +24,7 @@ jobs:
 
 
     - name: Build
-      run: python pack.py -pv ${{ github.event.release.tag_name }} --debug
+      run: feanor -pv ${{ github.event.release.tag_name }} --debug
 
     - name: Publish release assets
       uses: AButler/upload-release-assets@v3.0
