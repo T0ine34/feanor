@@ -1,11 +1,9 @@
 import argparse
 import os, sys, shutil
 from enum import Enum
-from pathlib import Path
 import importlib.metadata
 
 from gamuLogger import Logger, LEVELS
-import gamuLogger
 
 from feanorTempDir import TempFile, TempDir
 
@@ -22,8 +20,6 @@ class AbstractClassError(Exception):
         
     def __str__(self) -> str:
         return self.message
-    
-
 
 class BaseBuilder:
     """
@@ -79,12 +75,14 @@ Use `python {your_script}.py -h` to see the available options
     
     __CustomArgs = {} #type: dict[str, tuple[str, str, any, str]]
     
-    def __init__(self, args : dict[str, any], custom_args : dict[str, any]):
+    def __init__(self, args : dict[str, any], custom_args : dict[str, any], pathBase : str):
         if self.__class__ == BaseBuilder:
             raise AbstractClassError('BaseBuilder is an abstract class and cannot be instantiated')
 
         self.__args = args
         self.__custom_args = custom_args
+        
+        self.__pathBase = pathBase
 
         self.__hasExpectedExport = False
 
@@ -166,6 +164,10 @@ Use `python {your_script}.py -h` to see the available options
         """The version of the package the user wants to build"""
         return self.__args["package_version"]
 
+    @property
+    def pathBase(self):
+        """The from where are resolved relative paths in the source code (i.e. not the temporary directory)"""
+        return self.__pathBase
     
     @property
     def distDir(self):
@@ -180,12 +182,15 @@ Use `python {your_script}.py -h` to see the available options
 
     def addAndReplaceByPackageVersion(self, src, dest = None, versionString = "{version}"):
         """Add a file to the temporary directory and replace all occurrences of versionString in it  by the package version"""
+        if dest is None:
+            dest = src
+        if not os.path.isabs(src):
+            src = os.path.join(self.pathBase, src)
         Logger.debug(f'Adding file: {src} and replacing version string by {self.packageVersion}')
         with open(src, 'r') as file:
             content = file.read()
         content = content.replace(versionString, self.packageVersion)
-        if dest is None:
-            dest = src
+        
         with open(f'{self.tempDir}/{dest}', 'w') as file:
             file.write(content)
         return True
@@ -233,17 +238,21 @@ Use `python {your_script}.py -h` to see the available options
 
     def addFile(self, path, dest = None):
         """Copy a file to the temporary directory"""
-        Logger.debug(f'Adding file: {path}')
         if dest is None:
             dest = path
+        if not os.path.isabs(path):
+            path = os.path.join(self.pathBase, path)
+        Logger.debug(f'Adding file: {path}')
         shutil.copy(path, f'{self.tempDir}/{dest}')
         return True   
 
     def addDirectory(self, path, dest = None):
         """Copy a directory to the temporary directory"""
-        Logger.debug(f'Adding directory: {path}')
         if dest is None:
             dest = path
+        if not os.path.isabs(path):
+            path = os.path.join(self.pathBase, path)
+        Logger.debug(f'Adding directory: {path}')
         shutil.copytree(
             path,
             f'{self.tempDir}/{dest}',
@@ -448,7 +457,7 @@ Use `python {your_script}.py -h` to see the available options
 #region PRIVATE STATIC FUNCTIONS
 
     @staticmethod
-    def __config_args():
+    def config_args():
         argumentParser = argparse.ArgumentParser(description='Builder tool', prog="feanor", add_help=False)
         
         argumentParser.add_argument('build-file', help='The path to the build file (default : "%(default)s")', type=str, default='pack.py', nargs='?')
@@ -486,10 +495,24 @@ Use `python {your_script}.py -h` to see the available options
             return args, custom_args
     
     @staticmethod
-    def execute():
+    def pre_parse_args(argumentParser : argparse.ArgumentParser):
         try:
-            argumentParser = BaseBuilder.__config_args()
-
+            allArgs = argumentParser.parse_args()
+        except SystemExit as e:
+            Logger.error('Error while parsing arguments; use -h to see the available options')
+            raise RuntimeError('Error while parsing arguments') from e
+        else:
+            if allArgs.version:
+                Logger.info(f"feanor version : {feanorVersion}")
+                sys.exit(0)
+            if allArgs.help and not os.path.exists(os.path.join(os.getcwd(), vars(allArgs)['build-file'])):
+                argumentParser.print_help()
+                sys.exit(0)
+            return allArgs
+    
+    @staticmethod
+    def execute(argumentParser, pathBase):
+        try:
             # add user defined arguments
             customOptions = argumentParser.add_argument_group('Custom options')
             for arg in BaseBuilder.__CustomArgs:
@@ -538,7 +561,7 @@ Use `python {your_script}.py -h` to see the available options
                     Logger.warning(f'Unknown element in builder class: "{element}"; ignoring it')
 
             steps = [step for step in builderClass.__dict__ if step in possibleSteps]
-            builderInstance = builderClass(args, custom_args)
+            builderInstance = builderClass(args, custom_args, pathBase)
             builderInstance.__run(steps)
         
 #endregion

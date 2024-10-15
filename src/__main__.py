@@ -1,22 +1,28 @@
 import os
 import importlib.util
 import importlib
-from types import ModuleType
+from pathlib import Path
 
 from .__init__ import BaseBuilder
 
-def loadPackFile() -> ModuleType:
-    packFile = os.path.join(os.getcwd(), 'pack.py')
+def loadPackFile(filePath) -> Path:
+    """
+    Load the pack file and execute it
+    Return the absolute path to the pack file
+    """
+    packFile = os.path.join(os.getcwd(), filePath)
     if not os.path.exists(packFile):
         raise FileNotFoundError(f"Could not find pack file at {packFile}")
     spec = importlib.util.spec_from_file_location("pack", packFile)
     pack = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(pack)
-    return pack
+    return Path(packFile)
 
 def main() -> None:
-    pack = loadPackFile()
-    BaseBuilder.execute()
+    argumentParser = BaseBuilder.config_args()
+    args = BaseBuilder.pre_parse_args(argumentParser)
+    pathsBase = loadPackFile(vars(args)['build-file'])
+    BaseBuilder.execute(argumentParser, pathsBase.parent)
     
 
 if __name__ == '__main__':
