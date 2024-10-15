@@ -103,7 +103,10 @@ class Venv:
 
         cwd = os.getcwd()
         os.chdir(self.__workingDir)
-        returnCode = os.system(f'{os.path.join(self.__path, self.binDir, 'melkor')} {configFile} --debug' if self.__debugLevel in [LEVELS.DEBUG, LEVELS.DEEP_DEBUG] else f'melkor {configFile}')
+        cmd = os.path.join(self.__path, self.binDir, 'melkor') + ' ' + configFile
+        if self.__debugLevel in [LEVELS.DEBUG, LEVELS.DEEP_DEBUG]:
+            cmd += ' --debug'
+        returnCode = os.system(cmd)
         os.chdir(cwd)
         
         if returnCode != 0:
