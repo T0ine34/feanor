@@ -318,7 +318,7 @@ Use `python {your_script}.py -h` to see the available options
 
     def venv(self):
         """Create a virtual environment in the temporary directory"""
-        return Venv.getInstance(f'{self.tempDir}/env', self.tempDir)
+        return Venv.getInstance(f'{self.tempDir}/env', self.tempDir, self.__debugLevel)
 
 
 #endregion
@@ -385,9 +385,7 @@ Use `python {your_script}.py -h` to see the available options
     def __runStep(self, step : str):
         '''
         A step is considered failed if it raises an exception, or if it returns False
-        If it returns None, it is considered successful, but raises a warning
         '''
-        hasSucceeded = False
         try:
             hasSucceeded = getattr(self, step)()
         except Exception as e:
@@ -411,7 +409,6 @@ Use `python {your_script}.py -h` to see the available options
                 if step in self.__remainingSteps:
                     self.__remainingSteps.remove(step)
                 Logger.debug(f'Step "{step}" disabled')
-
 
         HasFailed = False
         while len(self.__remainingSteps) > 0 and not HasFailed:
