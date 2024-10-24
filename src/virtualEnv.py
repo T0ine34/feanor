@@ -1,6 +1,8 @@
 from gamuLogger import Logger, LEVELS
 import sys, os
 from feanorTempDir import TempFile
+import json
+from typing import Callable
 
 
 PYTHON = sys.executable #type: str
@@ -16,10 +18,11 @@ class Venv:
     """
     __instance = None
     
-    def __init__(self, path : str, workingDir : str, debugLevel : LEVELS = LEVELS.INFO):
+    def __init__(self, path : str, workingDir : str, exportFileMethod : Callable[[str], bool], debugLevel : LEVELS = LEVELS.INFO):
         self.__path = path
         self.__workingDir = workingDir
         self.__debugLevel = debugLevel
+        self.__exportFile = exportFileMethod
         
         self.binDir = 'bin' if IS_POSIX else 'Scripts'
         
@@ -107,7 +110,18 @@ class Venv:
         if self.__debugLevel in [LEVELS.DEBUG, LEVELS.DEEP_DEBUG]:
             cmd += ' --debug'
         returnCode = os.system(cmd)
-        os.chdir(cwd)
+        os.chdir(cwd) # reset the working directory
+        
+        # export the report file
+        # read the config file to get the report file name
+        with open(configFile, 'r') as file:
+            data = json.load(file)
+        reportFile = data['outFile']
+        if os.path.exists(reportFile):
+            Logger.debug(f'Exporting report file {reportFile}')
+            self.__exportFile(reportFile)
+        else:
+            Logger.error(f"Report file {reportFile} not found")
         
         if returnCode != 0:
             Logger.error(f'Melkor tests failed with return code {returnCode}')
@@ -119,11 +133,11 @@ class Venv:
 
 
     @staticmethod
-    def getInstance(path : str, workingDir : str, debugLevel : LEVELS = LEVELS.INFO):
+    def getInstance(path : str, workingDir : str, exportFileMethod : Callable[[str], bool], debugLevel : LEVELS = LEVELS.INFO):
         """Get the instance of the virtual environment, create it if it doesn't exist"""
         if Venv.__instance is None:
             Logger.debug("Creating new Venv instance")
-            Venv.__instance = Venv(path, workingDir, debugLevel)
+            Venv.__instance = Venv(path, workingDir, exportFileMethod, debugLevel)
         return Venv.__instance
 
 #endregion

@@ -318,7 +318,7 @@ Use `python {your_script}.py -h` to see the available options
 
     def venv(self):
         """Create a virtual environment in the temporary directory"""
-        return Venv.getInstance(f'{self.tempDir}/env', self.tempDir, self.__debugLevel)
+        return Venv.getInstance(f'{self.tempDir}/env', self.tempDir, self.exportFile, self.__debugLevel)
 
 
 #endregion
