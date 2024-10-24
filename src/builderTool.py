@@ -91,7 +91,7 @@ Use `python {your_script}.py -h` to see the available options
 
         self.__steps = {
             "Setup":        self.Status.WAITING,
-            "Build":        self.Status.WAITING,
+            "Build":        self.Status.DISABLED    if self.__args["no_build"] else self.Status.WAITING,
             "Tests":        self.Status.DISABLED    if self.__args["no_tests"]   else self.Status.WAITING,
             "BuildTests" :  self.Status.DISABLED    if self.__args["no_tests"]   else self.Status.WAITING,
             "Docs":         self.Status.DISABLED    if self.__args["no_docs"]   else self.Status.WAITING,
@@ -466,6 +466,7 @@ Use `python {your_script}.py -h` to see the available options
         buildersOptions = argumentParser.add_argument_group('Builder options')
         buildersOptions.add_argument('--no-tests', action='store_true', help='Do not run tests')
         buildersOptions.add_argument('--no-docs', action='store_true', help='Do not generate documentation')
+        buildersOptions.add_argument('--no-build', action='store_true', help='Only run tests, do not build the package')
         buildersOptions.add_argument('--publish', action='store_true', help='Publish the package')
         buildersOptions.add_argument('--no-clean', action='store_true', help='Do not clean temporary files')
         buildersOptions.add_argument('--dist-dir', help='Distribution directory (where to save the built files) (default : "%(default)s")', type=str, default='dist')
@@ -484,7 +485,7 @@ Use `python {your_script}.py -h` to see the available options
             Logger.error('Error while parsing arguments; use -h to see the available options')
             raise RuntimeError('Error while parsing arguments') from e
         else:
-            reservedArgsKeys = ['debug', 'deep_debug', 'no_tests', 'no_docs', 'publish', 'no_clean', 'dist_dir', 'package_version', 'help', 'version']
+            reservedArgsKeys = ['debug', 'deep_debug', 'no_tests', 'no_build', 'no_docs', 'publish', 'no_clean', 'dist_dir', 'package_version', 'help', 'version']
 
             # split the args into two lists (args, custom_args)
             args = {key: value for key, value in vars(allArgs).items() if key in reservedArgsKeys}
