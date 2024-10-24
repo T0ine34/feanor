@@ -117,7 +117,7 @@ class Venv:
         with open(f"{self.__workingDir}/{configFile}", 'r') as file:
             data = json.load(file)
         reportFile = data['outFile']
-        if os.path.exists(reportFile):
+        if os.path.exists(f"{self.__workingDir}/{reportFile}"):
             Logger.debug(f'Exporting report file {reportFile}')
             self.__exportFile(reportFile)
         else:
