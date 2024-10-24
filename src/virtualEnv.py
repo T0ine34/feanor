@@ -115,7 +115,7 @@ class Venv:
         # export the report file
         # read the config file to get the report file name
         with open(configFile, 'r') as file:
-            data = json.load(file)
+            data = json.load(f"{self.__workingDir}/{configFile}")
         reportFile = data['outFile']
         if os.path.exists(reportFile):
             Logger.debug(f'Exporting report file {reportFile}')
